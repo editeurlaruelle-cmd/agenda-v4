@@ -1,0 +1,610 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+
+<div class="jp-matrix">
+
+
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=IBM+Plex+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --border: #2a2a2a;
+    --accent: #e8d5a3;
+    --accent2: #c4a882;
+    --text: #e8e8e8;
+    --muted: #666;
+    --danger: #e07070;
+    --success: #70c495;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'IBM Plex Mono', monospace;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* HEADER */
+  header {
+    padding: 2rem 3rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: baseline;
+    gap: 1.5rem;
+  }
+  header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+  }
+  #today-label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+
+  /* LAYOUT */
+  .app {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* CALENDAR SIDEBAR */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .cal-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .cal-nav button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--accent);
+    cursor: pointer;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: background 0.15s;
+  }
+  .cal-nav button:hover { background: var(--border); }
+  .cal-nav span {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    color: var(--accent);
+  }
+  .cal-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 2px;
+  }
+  .cal-grid .day-name {
+    font-size: 0.6rem;
+    color: var(--muted);
+    text-align: center;
+    padding: 4px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.1s;
+    border-radius: 2px;
+  }
+  .cal-day:hover { background: var(--border); }
+  .cal-day.other-month { color: var(--muted); }
+  .cal-day.today { color: var(--bg); background: var(--accent2); font-weight: 500; }
+  .cal-day.selected { outline: 1px solid var(--accent); background: #2a2316; }
+  .cal-day.has-events::after {
+    content: '';
+    position: absolute;
+    bottom: 3px;
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--accent);
+  }
+  .cal-day.today.has-events::after { background: var(--bg); }
+
+  /* ADD EVENT FORM */
+  .add-form {
+    border: 1px solid var(--border);
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+  .add-form h3 {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.2rem;
+  }
+  .add-form input, .add-form select, .add-form textarea {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 0.5rem 0.6rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.15s;
+    resize: none;
+  }
+  .add-form input:focus, .add-form select:focus, .add-form textarea:focus {
+    border-color: var(--accent2);
+  }
+  .add-form select option { background: var(--bg); }
+  .btn-add {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 0.6rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.78rem;
+    font-weight: 500;
+    cursor: pointer;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: background 0.15s;
+  }
+  .btn-add:hover { background: var(--accent2); }
+
+  /* MAIN AREA */
+  .main {
+    padding: 2rem 2.5rem;
+    overflow-y: auto;
+  }
+  .day-header {
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .day-header .date-big {
+    font-family: 'Playfair Display', serif;
+    font-size: 3rem;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .day-header .date-info {
+    display: flex;
+    flex-direction: column;
+  }
+  .day-header .weekday { font-size: 0.75rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.1em; }
+  .day-header .month-year { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; }
+
+  .no-events {
+    color: var(--muted);
+    font-size: 0.8rem;
+    letter-spacing: 0.05em;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border);
+  }
+
+  /* EVENT ITEMS */
+  .events-list { display: flex; flex-direction: column; gap: 0.5rem; }
+  .event-item {
+    display: flex;
+    align-items: stretch;
+    border: 1px solid var(--border);
+    transition: border-color 0.15s, transform 0.1s;
+    animation: fadeIn 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+  .event-item:hover { border-color: var(--accent2); }
+  .event-color-bar { width: 3px; flex-shrink: 0; }
+  .event-content { padding: 0.8rem 1rem; flex: 1; }
+  .event-time { font-size: 0.65rem; color: var(--muted); letter-spacing: 0.05em; margin-bottom: 0.2rem; }
+  .event-title { font-size: 0.9rem; color: var(--text); font-weight: 400; }
+  .event-desc { font-size: 0.7rem; color: var(--muted); margin-top: 0.25rem; line-height: 1.5; }
+  .event-actions {
+    display: flex;
+    flex-direction: column;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+  .event-item:hover .event-actions { opacity: 1; }
+  .event-actions button {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 0.5rem 0.8rem;
+    font-size: 0.75rem;
+    transition: color 0.1s;
+    flex: 1;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+  .event-actions .btn-del:hover { color: var(--danger); }
+
+  /* CATEGORY COLORS */
+  .cat-travail { background: #5b8ee6; }
+  .cat-perso { background: #70c495; }
+  .cat-sante { background: #e07070; }
+  .cat-autre { background: var(--accent2); }
+
+  .week-view-toggle {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .week-view-toggle button {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 0.35rem 0.8rem;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.7rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    transition: all 0.15s;
+  }
+  .week-view-toggle button.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: #2a2316;
+  }
+
+  /* WEEK VIEW */
+  .week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 1px;
+    background: var(--border);
+    border: 1px solid var(--border);
+  }
+  .week-col { background: var(--bg); padding: 0.6rem; min-height: 180px; }
+  .week-col-head {
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .week-col-head .week-day-num {
+    display: block;
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    color: var(--accent);
+  }
+  .week-col-head.is-today .week-day-num { color: var(--accent2); }
+  .week-col-head.selected-day .week-day-num { text-decoration: underline; }
+  .week-event {
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    margin-bottom: 2px;
+    background: #2a2316;
+    color: var(--accent);
+    border-left: 2px solid var(--accent2);
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  @media (max-width: 700px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+</head>
+<body>
+
+
+<header>
+  <h1>Agenda</h1>
+  <span id="today-label"></span>
+</header>
+
+<div class="app">
+  <aside class="sidebar">
+    <!-- Calendar -->
+    <div>
+      <div class="cal-nav">
+        <button id="prev-month">&#8592;</button>
+        <span id="cal-title"></span>
+        <button id="next-month">&#8594;</button>
+      </div>
+      <div style="margin-top:0.8rem;" class="cal-grid" id="cal-grid"></div>
+    </div>
+
+    <!-- Add event form -->
+    <div class="add-form">
+      <h3>Nouvel événement</h3>
+      <input type="text" id="ev-title" placeholder="Titre..." />
+      <input type="date" id="ev-date" />
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.4rem;">
+        <input type="time" id="ev-start" />
+        <input type="time" id="ev-end" />
+      </div>
+      <select id="ev-cat">
+        <option value="travail">Travail</option>
+        <option value="perso">Personnel</option>
+        <option value="sante">Santé</option>
+        <option value="autre">Autre</option>
+      </select>
+      <textarea id="ev-desc" rows="2" placeholder="Notes..."></textarea>
+      <button class="btn-add" id="btn-add-ev">+ Ajouter</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main-content"></main>
+</div>
+
+<script>
+  // ---- DATA ----
+  const STORAGE_KEY = 'agenda_events_v1';
+  let events = [];
+
+  function loadEvents() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      events = raw ? JSON.parse(raw) : [];
+    } catch(e) { events = []; }
+  }
+  function saveEvents() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
+  }
+
+  // ---- STATE ----
+  const today = new Date();
+  let currentMonth = today.getMonth();
+  let currentYear = today.getFullYear();
+  let selectedDate = toDateStr(today);
+  let viewMode = 'day'; // 'day' or 'week'
+
+  function toDateStr(d) {
+    return d.toISOString().split('T')[0];
+  }
+  function parseDate(s) {
+    const [y,m,d] = s.split('-').map(Number);
+    return new Date(y, m-1, d);
+  }
+
+  // ---- CALENDAR ----
+  const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const DAYS_FR = ['Lu','Ma','Me','Je','Ve','Sa','Di'];
+  const DAYS_FULL = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+
+  function getEventDates() {
+    const set = new Set();
+    events.forEach(e => set.add(e.date));
+    return set;
+  }
+
+  function renderCalendar() {
+    document.getElementById('cal-title').textContent = `${MONTHS_FR[currentMonth]} ${currentYear}`;
+    const grid = document.getElementById('cal-grid');
+    grid.innerHTML = '';
+    // Day names (Mon-Sun)
+    DAYS_FR.forEach(d => {
+      const el = document.createElement('div');
+      el.className = 'day-name';
+      el.textContent = d;
+      grid.appendChild(el);
+    });
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    // Monday-based: 0=Mon, 6=Sun
+    let startDow = (firstDay.getDay() + 6) % 7;
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    const daysInPrev = new Date(currentYear, currentMonth, 0).getDate();
+    const eventDates = getEventDates();
+    const todayStr = toDateStr(today);
+
+    let cells = [];
+    for (let i = 0; i < startDow; i++) {
+      cells.push({ day: daysInPrev - startDow + 1 + i, month: currentMonth - 1, year: currentYear, other: true });
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      cells.push({ day: i, month: currentMonth, year: currentYear, other: false });
+    }
+    let rem = 42 - cells.length;
+    for (let i = 1; i <= rem; i++) {
+      cells.push({ day: i, month: currentMonth + 1, year: currentYear, other: true });
+    }
+
+    cells.forEach(c => {
+      const el = document.createElement('div');
+      el.className = 'cal-day';
+      el.textContent = c.day;
+      const yr = c.month < 0 ? c.year - 1 : c.month > 11 ? c.year + 1 : c.year;
+      const mo = ((c.month % 12) + 12) % 12;
+      const ds = `${yr}-${String(mo+1).padStart(2,'0')}-${String(c.day).padStart(2,'0')}`;
+      if (c.other) el.classList.add('other-month');
+      if (ds === todayStr) el.classList.add('today');
+      if (ds === selectedDate) el.classList.add('selected');
+      if (eventDates.has(ds)) el.classList.add('has-events');
+      el.addEventListener('click', () => {
+        selectedDate = ds;
+        renderCalendar();
+        renderMain();
+        document.getElementById('ev-date').value = ds;
+      });
+      grid.appendChild(el);
+    });
+  }
+
+  // ---- MAIN VIEW ----
+  function renderMain() {
+    const main = document.getElementById('main-content');
+    const dp = parseDate(selectedDate);
+    const dowIdx = (dp.getDay() + 6) % 7;
+    const dayStr = DAYS_FULL[dowIdx];
+    const [y, m, d] = selectedDate.split('-');
+
+    let html = `
+      <div class="week-view-toggle">
+        <button class="${viewMode==='day'?'active':''}" onclick="setView('day')">Jour</button>
+        <button class="${viewMode==='week'?'active':''}" onclick="setView('week')">Semaine</button>
+      </div>
+    `;
+
+    if (viewMode === 'day') {
+      html += `<div class="day-header">
+        <div class="date-big">${d}</div>
+        <div class="date-info">
+          <span class="weekday">${dayStr}</span>
+          <span class="month-year">${MONTHS_FR[parseInt(m)-1]} ${y}</span>
+        </div>
+      </div>`;
+
+      const dayEvents = events.filter(e => e.date === selectedDate).sort((a,b) => (a.start||'').localeCompare(b.start||''));
+      if (!dayEvents.length) {
+        html += `<div class="no-events">— Aucun événement ce jour —</div>`;
+      } else {
+        html += `<div class="events-list">`;
+        dayEvents.forEach(ev => {
+          const timeStr = ev.start ? (ev.end ? `${ev.start} → ${ev.end}` : ev.start) : '';
+          html += `<div class="event-item">
+            <div class="event-color-bar cat-${ev.cat}"></div>
+            <div class="event-content">
+              <div class="event-time">${timeStr || '&nbsp;'}</div>
+              <div class="event-title">${esc(ev.title)}</div>
+              ${ev.desc ? `<div class="event-desc">${esc(ev.desc)}</div>` : ''}
+            </div>
+            <div class="event-actions">
+              <button class="btn-del" onclick="deleteEvent('${ev.id}')">✕</button>
+            </div>
+          </div>`;
+        });
+        html += `</div>`;
+      }
+    } else {
+      // Week view
+      const weekStart = new Date(dp);
+      weekStart.setDate(dp.getDate() - dowIdx);
+      const todayStr = toDateStr(today);
+      html += `<div class="week-grid">`;
+      for (let i = 0; i < 7; i++) {
+        const d2 = new Date(weekStart);
+        d2.setDate(weekStart.getDate() + i);
+        const ds = toDateStr(d2);
+        const isToday = ds === todayStr;
+        const isSel = ds === selectedDate;
+        const dayEvents = events.filter(e => e.date === ds).sort((a,b) => (a.start||'').localeCompare(b.start||''));
+        html += `<div class="week-col" onclick="selectDay('${ds}')">
+          <div class="week-col-head ${isToday?'is-today':''} ${isSel?'selected-day':''}">
+            <span class="week-day-num">${d2.getDate()}</span>
+            ${DAYS_FR[i]}
+          </div>`;
+        dayEvents.forEach(ev => {
+          html += `<div class="week-event" title="${esc(ev.title)}">${ev.start?ev.start+' ':''} ${esc(ev.title)}</div>`;
+        });
+        html += `</div>`;
+      }
+      html += `</div>`;
+    }
+
+    main.innerHTML = html;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  window.setView = function(v) {
+    viewMode = v;
+    renderMain();
+  };
+
+  window.selectDay = function(ds) {
+    selectedDate = ds;
+    viewMode = 'day';
+    // update calendar month if needed
+    const [y,m] = ds.split('-').map(Number);
+    currentYear = y; currentMonth = m - 1;
+    renderCalendar();
+    renderMain();
+  };
+
+  window.deleteEvent = function(id) {
+    events = events.filter(e => e.id !== id);
+    saveEvents();
+    renderCalendar();
+    renderMain();
+  };
+
+  // ---- ADD EVENT ----
+  document.getElementById('btn-add-ev').addEventListener('click', () => {
+    const title = document.getElementById('ev-title').value.trim();
+    const date = document.getElementById('ev-date').value;
+    if (!title || !date) {
+      document.getElementById('ev-title').style.borderColor = '#e07070';
+      setTimeout(() => document.getElementById('ev-title').style.borderColor = '', 1000);
+      return;
+    }
+    const ev = {
+      id: Date.now().toString(),
+      title,
+      date,
+      start: document.getElementById('ev-start').value,
+      end: document.getElementById('ev-end').value,
+      cat: document.getElementById('ev-cat').value,
+      desc: document.getElementById('ev-desc').value.trim(),
+    };
+    events.push(ev);
+    saveEvents();
+    selectedDate = date;
+    const [y,m] = date.split('-').map(Number);
+    currentYear = y; currentMonth = m - 1;
+    document.getElementById('ev-title').value = '';
+    document.getElementById('ev-start').value = '';
+    document.getElementById('ev-end').value = '';
+    document.getElementById('ev-desc').value = '';
+    renderCalendar();
+    renderMain();
+  });
+
+  // ---- NAV ----
+  document.getElementById('prev-month').addEventListener('click', () => {
+    currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }
+    renderCalendar();
+  });
+  document.getElementById('next-month').addEventListener('click', () => {
+    currentMonth++; if (currentMonth > 11) { currentMonth = 0; currentYear++; }
+    renderCalendar();
+  });
+
+  // ---- INIT ----
+  const todayStr2 = toDateStr(today);
+  document.getElementById('today-label').textContent = todayStr2;
+  document.getElementById('ev-date').value = selectedDate;
+  loadEvents();
+  renderCalendar();
+  renderMain();
+</script>
+</body>
+</html>
