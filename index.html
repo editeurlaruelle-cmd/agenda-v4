@@ -1,10 +1,5 @@
-
 <!DOCTYPE html>
 <html lang="fr">
-
-<div class="jp-matrix">
-
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Agenda</title>
@@ -30,8 +25,6 @@
     display: flex;
     flex-direction: column;
   }
-
-  /* HEADER */
   header {
     padding: 2rem 3rem 1.5rem;
     border-bottom: 1px solid var(--border);
@@ -51,16 +44,12 @@
     letter-spacing: 0.1em;
     text-transform: uppercase;
   }
-
-  /* LAYOUT */
   .app {
     display: grid;
     grid-template-columns: 320px 1fr;
     flex: 1;
     min-height: 0;
   }
-
-  /* CALENDAR SIDEBAR */
   .sidebar {
     border-right: 1px solid var(--border);
     padding: 1.5rem;
@@ -129,8 +118,6 @@
     background: var(--accent);
   }
   .cal-day.today.has-events::after { background: var(--bg); }
-
-  /* ADD EVENT FORM */
   .add-form {
     border: 1px solid var(--border);
     padding: 1rem;
@@ -157,9 +144,7 @@
     transition: border-color 0.15s;
     resize: none;
   }
-  .add-form input:focus, .add-form select:focus, .add-form textarea:focus {
-    border-color: var(--accent2);
-  }
+  .add-form input:focus, .add-form select:focus, .add-form textarea:focus { border-color: var(--accent2); }
   .add-form select option { background: var(--bg); }
   .btn-add {
     background: var(--accent);
@@ -175,8 +160,6 @@
     transition: background 0.15s;
   }
   .btn-add:hover { background: var(--accent2); }
-
-  /* MAIN AREA */
   .main {
     padding: 2rem 2.5rem;
     overflow-y: auto;
@@ -193,13 +176,9 @@
     color: var(--accent);
     line-height: 1;
   }
-  .day-header .date-info {
-    display: flex;
-    flex-direction: column;
-  }
+  .day-header .date-info { display: flex; flex-direction: column; }
   .day-header .weekday { font-size: 0.75rem; color: var(--accent2); text-transform: uppercase; letter-spacing: 0.1em; }
   .day-header .month-year { font-size: 0.7rem; color: var(--muted); letter-spacing: 0.05em; }
-
   .no-events {
     color: var(--muted);
     font-size: 0.8rem;
@@ -207,8 +186,6 @@
     padding: 2rem 0;
     border-top: 1px solid var(--border);
   }
-
-  /* EVENT ITEMS */
   .events-list { display: flex; flex-direction: column; gap: 0.5rem; }
   .event-item {
     display: flex;
@@ -245,13 +222,10 @@
     font-family: 'IBM Plex Mono', monospace;
   }
   .event-actions .btn-del:hover { color: var(--danger); }
-
-  /* CATEGORY COLORS */
   .cat-travail { background: #5b8ee6; }
   .cat-perso { background: #70c495; }
   .cat-sante { background: #e07070; }
   .cat-autre { background: var(--accent2); }
-
   .week-view-toggle {
     display: flex;
     gap: 0.5rem;
@@ -274,8 +248,6 @@
     color: var(--accent);
     background: #2a2316;
   }
-
-  /* WEEK VIEW */
   .week-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -315,6 +287,31 @@
     text-overflow: ellipsis;
   }
 
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 1rem 3rem;
+    text-align: center;
+  }
+  .rainbow-text {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    background: linear-gradient(90deg,
+      #ff0000, #ff8800, #ffee00, #00cc44, #0099ff, #9933ff, #ff0099, #ff0000
+    );
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: rainbow-move 3s linear infinite;
+  }
+  @keyframes rainbow-move {
+    0%   { background-position: 0% center; }
+    100% { background-position: 200% center; }
+  }
+
   @media (max-width: 700px) {
     .app { grid-template-columns: 1fr; }
     .sidebar { border-right: none; border-bottom: 1px solid var(--border); }
@@ -323,7 +320,6 @@
 </head>
 <body>
 
-
 <header>
   <h1>Agenda</h1>
   <span id="today-label"></span>
@@ -331,7 +327,6 @@
 
 <div class="app">
   <aside class="sidebar">
-    <!-- Calendar -->
     <div>
       <div class="cal-nav">
         <button id="prev-month">&#8592;</button>
@@ -340,8 +335,6 @@
       </div>
       <div style="margin-top:0.8rem;" class="cal-grid" id="cal-grid"></div>
     </div>
-
-    <!-- Add event form -->
     <div class="add-form">
       <h3>Nouvel événement</h3>
       <input type="text" id="ev-title" placeholder="Titre..." />
@@ -364,8 +357,11 @@
   <main class="main" id="main-content"></main>
 </div>
 
+<footer>
+  <span class="rainbow-text">Créateur du site : Kylian</span>
+</footer>
+
 <script>
-  // ---- DATA ----
   const STORAGE_KEY = 'agenda_events_v1';
   let events = [];
 
@@ -379,22 +375,18 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(events));
   }
 
-  // ---- STATE ----
   const today = new Date();
   let currentMonth = today.getMonth();
   let currentYear = today.getFullYear();
   let selectedDate = toDateStr(today);
-  let viewMode = 'day'; // 'day' or 'week'
+  let viewMode = 'day';
 
-  function toDateStr(d) {
-    return d.toISOString().split('T')[0];
-  }
+  function toDateStr(d) { return d.toISOString().split('T')[0]; }
   function parseDate(s) {
     const [y,m,d] = s.split('-').map(Number);
     return new Date(y, m-1, d);
   }
 
-  // ---- CALENDAR ----
   const MONTHS_FR = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
   const DAYS_FR = ['Lu','Ma','Me','Je','Ve','Sa','Di'];
   const DAYS_FULL = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
@@ -409,7 +401,6 @@
     document.getElementById('cal-title').textContent = `${MONTHS_FR[currentMonth]} ${currentYear}`;
     const grid = document.getElementById('cal-grid');
     grid.innerHTML = '';
-    // Day names (Mon-Sun)
     DAYS_FR.forEach(d => {
       const el = document.createElement('div');
       el.className = 'day-name';
@@ -417,7 +408,6 @@
       grid.appendChild(el);
     });
     const firstDay = new Date(currentYear, currentMonth, 1);
-    // Monday-based: 0=Mon, 6=Sun
     let startDow = (firstDay.getDay() + 6) % 7;
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const daysInPrev = new Date(currentYear, currentMonth, 0).getDate();
@@ -457,7 +447,6 @@
     });
   }
 
-  // ---- MAIN VIEW ----
   function renderMain() {
     const main = document.getElementById('main-content');
     const dp = parseDate(selectedDate);
@@ -503,7 +492,6 @@
         html += `</div>`;
       }
     } else {
-      // Week view
       const weekStart = new Date(dp);
       weekStart.setDate(dp.getDate() - dowIdx);
       const todayStr = toDateStr(today);
@@ -535,15 +523,11 @@
     return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   }
 
-  window.setView = function(v) {
-    viewMode = v;
-    renderMain();
-  };
+  window.setView = function(v) { viewMode = v; renderMain(); };
 
   window.selectDay = function(ds) {
     selectedDate = ds;
     viewMode = 'day';
-    // update calendar month if needed
     const [y,m] = ds.split('-').map(Number);
     currentYear = y; currentMonth = m - 1;
     renderCalendar();
@@ -557,7 +541,6 @@
     renderMain();
   };
 
-  // ---- ADD EVENT ----
   document.getElementById('btn-add-ev').addEventListener('click', () => {
     const title = document.getElementById('ev-title').value.trim();
     const date = document.getElementById('ev-date').value;
@@ -568,8 +551,7 @@
     }
     const ev = {
       id: Date.now().toString(),
-      title,
-      date,
+      title, date,
       start: document.getElementById('ev-start').value,
       end: document.getElementById('ev-end').value,
       cat: document.getElementById('ev-cat').value,
@@ -588,7 +570,6 @@
     renderMain();
   });
 
-  // ---- NAV ----
   document.getElementById('prev-month').addEventListener('click', () => {
     currentMonth--; if (currentMonth < 0) { currentMonth = 11; currentYear--; }
     renderCalendar();
@@ -598,9 +579,7 @@
     renderCalendar();
   });
 
-  // ---- INIT ----
-  const todayStr2 = toDateStr(today);
-  document.getElementById('today-label').textContent = todayStr2;
+  document.getElementById('today-label').textContent = toDateStr(today);
   document.getElementById('ev-date').value = selectedDate;
   loadEvents();
   renderCalendar();
